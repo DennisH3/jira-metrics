@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^\.gitlab-ci\.yml$
+vignettes/\.gitkeep$
+Rmd$
+html$

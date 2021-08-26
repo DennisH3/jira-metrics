@@ -1,0 +1,10 @@
+image: artifactory.cloud.statcan.ca/docker-remote/rocker/verse:4.0.2
+test:
+  script:
+    - R -e 'install.packages(c("plotly", "tidyverse", "data.table", "janitor", "RColorBrewer", "shiny", "xml2", "testthat"))'
+    # CI/CD passed using devtools
+    # - R -e 'devtools::build(binary = TRUE)'
+    # - R -e 'devtools::test()'
+    # - R -e 'devtools::install()'
+    - R CMD build . --no-build-vignettes --no-manual
+    - R CMD check *tar.gz --no-build-vignettes --no-manual

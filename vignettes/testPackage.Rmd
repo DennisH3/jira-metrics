@@ -1,0 +1,199 @@
+---
+title: "Test jiraR Package"
+output: html_notebook
+---
+
+```{r}
+library(jiraR)
+library(janitor)
+library(htmlwidgets)
+library(plotly)
+```
+
+```{r}
+# Number of rows to generate
+numIssues <- 100
+
+# Note: Probabilities were rounded from JIRA's Pie Chart Report. These probabilities will be outdated as more
+#       issues are added
+
+# Initialize empty lists to be columns in the data frame
+summaries <- list()
+dateStart <- list()
+dateResolved <- list()
+
+# Generate random Issue key
+keys <- paste("INNOSF-", sample.int(n = 200, size = numIssues, replace = FALSE), sep = "")
+
+# Randomly choose an issue type
+issueType <- sample(c("Epic", "Task", "Sub-task"), size = numIssues, replace = TRUE, 
+                    prob = c(0.15, 0.55, 0.30))
+
+# Randomly choose a status
+status <- sample(c("To Do", "In Progress", "Done"), size = numIssues, replace = TRUE)
+
+# Fill Project with "INNOSF"
+project <- rep("INNOSF", numIssues)
+
+# Randomly choose an assignee
+assignee <- sample(c("SC", "KB", "DH", "Unassigned", "Other"), size = numIssues, replace = TRUE,
+                  prob = c(0.50, 0.33, 0.15, 0.02, 0.05))
+
+# Randomly choose a reporter
+reporter <- sample(c("SC", "KB", "DH"), size = numIssues, replace = TRUE, prob = c(0.60, 0.40, 0.02))
+
+# Randomly choose a creator
+creator <- sample(c("SC", "KB", "DH"), size = numIssues, replace = TRUE, prob = c(0.60, 0.40, 0.02))
+
+# Randomly choose a component
+# Probabilities were calculated with (# of categorized issues/total # of known categorized issues
+# multiplied by 62 (current number of issues uncategorized) + # of categorized issues)/100
+component <- sample(c("Client Consultations", "Client Projects", "Outreach", "Jira Setup", 
+                    "Surge Team Research"), size = numIssues, replace = TRUE,
+                    prob = c(0.70, 0.15, 0.10, 0.05, 0.03))
+
+# Randomly choose a label
+label <- sample(c("QA", "Visualizations", "Background", "Capacity", "Connection"), size = numIssues,
+                replace = TRUE, prob = c(0.50, 0.80, 0.10, 0.10, 0.10))
+
+# Randomly choose a division (Full list of divisions can be added later)
+division <- sample(c("PPD", "CPD", "AGRI", "OID", "RSID", "DIID", "DEM", "ICMIC", "CSDID", "DSS", "IATD",
+                     "CELISD", "ITSLM"), size = numIssues, replace = TRUE)
+
+# Randomly choose a field
+field <- sample(3:9, size = numIssues, replace = TRUE)
+
+# Randomly choose a workspace environment
+workspace <- sample(c("AAW", "On-premise", "Off-premise", "VDI"), size = numIssues, replace = TRUE,
+                    prob = c(0.30, 0.45, 0.20, 0.05))
+
+# Fill the lists with synthetic data
+for(i in 1:numIssues) {
+  
+  # Generate random summaries
+  summaries[i] <- paste(sample(c(letters, LETTERS), size = 3, replace = TRUE), collapse = "")
+  
+  # Check if status is done
+  if (status[i] == "Done"){
+    
+    # Generate a random date resolved
+    dateResolved[[i]] <- sample(seq(from = as.Date('2020-10-15'), to = as.Date('2021-01-01'), by = "day"), 
+                                size = 1)
+    
+    # Generate a random start date before but up to resolve date (can complete task on same day)
+    dateStart[[i]] <- sample(seq(from = as.Date("2020-03-10"), to = dateResolved[[i]], by = "day"), 
+                             size = 1)
+  } else {
+    
+    # Otherwise, dateResolved is NA
+    dateResolved[[i]] <- NA
+    
+    # Otherwise, Generate a random start date
+    dateStart[[i]] <- sample(seq(from = as.Date("2020-03-10"), to = as.Date("2021-01-01"), by = "day"), 
+                             size = 1)
+  }
+}
+```
+
+```{r}
+# Create the data frame from the lists and reorder the columns
+df <- data.frame(unlist(issueType), unlist(summaries), unlist(project), unlist(keys), unlist(status),
+                 unlist(division), unlist(field), unlist(label), unlist(workspace), unlist(component),
+                 unlist(creator), unlist(reporter), unlist(assignee))
+
+# Name the columns
+names(df) <- c("Issue Type", "Summary", "Project", "Issue key", "Status", "Division", "Field", "Label",
+               "Workspace", "Component", "Creator", "Reporter", "Assignee")
+
+# Create a data frame for date started
+dateStart <- select(pivot_longer(as.data.frame(dateStart), cols = 1:numIssues, values_to = "Date Started"),
+                    "Date Started")
+
+# Createa data frame for date resolved
+dateResolved <- select(pivot_longer(as.data.frame(dateResolved), cols = 1:numIssues, 
+                                    values_to = "Date Resolved"), "Date Resolved")
+
+# Bind the data frames
+df <- cbind(df, dateStart, dateResolved)
+
+# Display
+df
+```
+
+```{r}
+# R is reading the Date columns as string. Need to convert the last 2 rows to be date type
+test <- read.csv("~/jiraR/tests/testData.csv", check.names = FALSE)
+test
+```
+
+```{r}
+# Read actual metrics
+# Load the data, clean the names and select columns to keep
+df <- select(clean_names(read.csv("~/JIRA Metrics/JIRA_data_2021-01-13.csv")),
+            c("issue_type", "summary", "project_key", "issue_key", "status", "custom_field_division_2", 
+              "custom_field_field", "labels", "custom_field_workspace", "component_s", 
+              "creator", "reporter", "assignee", "custom_field_start_date", "resolved"))
+
+# Rename the columns
+names(df) <- c("Issue Type", "Summary", "Project key", "Issue key", "Status", "Division", "Field", 
+                     "Job Type", "Workspace", "Component", "Creator", "Reporter", "Assignee", "Date Started", 
+                     "Date Resolved")
+
+df
+
+# Convert Start Date and Resolved columns to type Date
+# Remove the hour information in date time
+df[["Date Started"]] <- as.Date(df[["Date Started"]], format = '%Y-%m-%d')
+df[["Date Resolved"]] <- as.Date(df[["Date Resolved"]], format = '%Y-%m-%d')
+
+# Display
+df
+```
+
+
+```{r}
+closedEpics(df)
+newIssues(df)
+sumTable(df)
+```
+
+```{r}
+activeIssues(df)
+```
+
+```{r}
+divIssues(df)
+```
+
+```{r}
+wsIssues(df)
+```
+
+```{r}
+cePlot(df)
+```
+
+```{r}
+niPlot(df)
+```
+
+```{r}
+aiPlot(df)
+```
+
+```{r}
+divPlot(df)
+```
+
+```{r}
+wsPlot(df)
+```
+
+```{r}
+library(shiny)
+library(tidyverse)
+library(data.table)
+jiraApp()
+```
+
+

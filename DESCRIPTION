@@ -1,0 +1,36 @@
+Package: jiraR
+Type: Package
+Title: Jira R Package
+Version: 0.1.0
+Date: 2020-12-15
+Authors@R: c(
+    person("Dennis", "Huynh", role = c("aut", "cre"), email = "dennis.huynh@canada.ca"),
+    person("Her Majesty the Queen in Right of Canada, as represented by the Minister of Statistics Canada", role = c("cph"))
+    )
+Maintainer: Dennis Huynh <dennis.huynh@canada.ca>
+Description: JIRA R Package
+    Create a package that summarizes and plots the following metrics:
+    -Number of closed epics per month for the last 12 months.
+    -Number of new issues each month for the last 12 months.
+    -Distribution of active issues in the 5 components, by month for the last 6 months.
+    -Distribution of issues by division, grouped by field (likely a stacked bar chart).
+    -Distribution of issues by workspaces.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Suggests: 
+    testthat
+RoxygenNote: 7.1.1
+Imports: 
+    plotly,
+	rlang,
+    dplyr,
+    tidyr,
+	stringr,
+	purrr,
+	magrittr,
+    data.table,
+    janitor,
+    RColorBrewer,
+    shiny,
+    xml2

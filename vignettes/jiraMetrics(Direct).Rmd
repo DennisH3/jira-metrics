@@ -1,0 +1,119 @@
+---
+title: "Jira Metrics (Direct)"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(data.table)
+library(htmlwidgets)
+library(plotly)
+```
+
+```{r}
+# Get the API url call for the project
+url <- GET("[insert jira link here]")
+
+# Note: There may be a limit to the number of times this can be run
+# Solution: Restart the R session
+df <- jsonlite::fromJSON(content(url, as = "text"), flatten = TRUE) # flattens out the data
+```
+
+```{r}
+# Generate full list of Jira information
+#names(df$issues)
+
+# Select which columns to keep
+jira <- select(df$issues, c("key", "fields.summary", "fields.issuetype.name", "fields.status.name", 
+                          "fields.assignee.name", "fields.reporter.name", "fields.creator.name",
+                          "fields.components", "fields.labels", "fields.customfield_15416", 
+                          "fields.customfield_14028.value", "fields.customfield_16203", "fields.customfield_13907",
+                          "fields.resolutiondate"))
+```
+
+```{r}
+# To extract the dataframe information from inside the dataframe
+# Unnesting creates 17 columns
+df <- tidyr::unnest(jira, fields.components)
+
+# Select which columns to keep
+df <- select(df, c("key", "fields.summary", "fields.issuetype.name", "fields.status.name", 
+                          "fields.assignee.name", "fields.reporter.name", "fields.creator.name",
+                          "name", "fields.labels", "fields.customfield_15416", 
+                          "fields.customfield_14028.value", "fields.customfield_16203", "fields.customfield_13907",
+                          "fields.resolutiondate"))
+
+
+# Rename columns
+names(df) <- c("Issue Key", "Summary", "Issue Type", "Status", "Assignee", "Reporter", "Creator",
+               "Component", "Job Type", "Division", "Field", "Workspace", "Date Started", "Date Resolved")
+
+# Convert lists to columns (if there are missing values, an error will occur)
+df$`Job Type` <- unlist(df$`Job Type`)
+df$Workspace <- unlist(df$Workspace)
+
+# convert Field to integer
+df$Field <- as.integer(df$Field)
+
+# Keep the first 10 chars
+df$`Date Resolved` <- substr(df$`Date Resolved`, 1, 10)
+
+# Convert Date Started and Date Resolved to Date types
+df$`Date Started` <- as.Date(df$`Date Started`)
+df$`Date Resolved` <- as.Date(df$`Date Resolved`)
+
+df
+```
+
+```{r}
+library(jiraR)
+```
+
+```{r}
+closedEpics(df)
+newIssues(df)
+sumTable(df)
+```
+
+```{r}
+activeIssues(df)
+```
+
+```{r}
+divIssues(df)
+```
+
+```{r}
+wsIssues(df)
+```
+
+```{r}
+cePlot(df)
+```
+
+```{r}
+niPlot(df)
+```
+
+```{r}
+aiPlot(df)
+```
+
+```{r}
+divPlot(df)
+```
+
+```{r}
+wsPlot(df)
+```
+
+```{r}
+library(shiny)
+library(tidyverse)
+library(data.table)
+jiraApp()
+```
