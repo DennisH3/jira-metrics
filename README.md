@@ -1,11 +1,18 @@
 [(Français)](#le-nom-du-projet)
 
-## Name of the project
+# Jira Metrics
 
-- What is this project?
-- How does it work?
-- Who will use this project?
-- What is the goal of this project?
+jiraR is an R Package that uses exported Jira Issues to create data visualizations to report metrics defined by the user. It includes an RMarkdown solution as well as an RShiny GUI solution.
+
+There are 4 main files:
+- countIssues.R: contains functions that count issues based on closed epics, new issues, active issues, division, and workspace. It also includes a generalized count issues function.
+- plotMetrics.R: creates the visualizations for the respective function in countIssues.R
+- xmltodf.R: converts exported Jira Issues XML file to a data frame object
+- metricsApp.R: the GUI for displaying the data visualizations of the metrics. Requires the Jira Issues to be input as CSV or XML.
+
+For an example of the jiraR package being used, refer to [/vignettes/jiraMetrics(Direct).Rmd](https://github.com/DennisH3/jira-metrics/blob/master/vignettes/jiraMetrics(Direct).Rmd)
+
+The example, directly pulls Jira issues into R using the Jira API instead of loading from a CSV or XML file.
 
 ### How to Contribute
 
